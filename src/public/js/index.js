@@ -1,46 +1,52 @@
 const socket = io()
-
 const chatbox = document.getElementById('chatbox')
-let user = sessionStorageStorage.getItem('user') || ''
+let user = sessionStorage.getItem('user') || ''
 
-Swal.fire({
-    title: 'Auth',
-    input: 'text',
-    text: 'set user name',
-    inputValidator: value =>{
-        return !value.trim() && 'please write username'
-    },
-    allowOutsideClick : false
-}).then(result =>{
-    user=result.value
+if (!user) {
+    Swal.fire({
+        title: 'Auth',
+        input: 'text',
+        text: 'Set username',
+        inputValidator: value => {
+            return !value.trim() && 'Please. Write a username'
+        },
+        allowOutsideClick: false
+    }).then(result => {
+        user = result.value
+        document.getElementById('username').innerHTML = user
+        sessionStorage.setItem("user", user)
+        socket.emit('new', user)
+    })
+} else {
     document.getElementById('username').innerHTML = user
-    sessionStorageStorage.setItem('user', user)
     socket.emit('new', user)
-})
-//enviar
-chatbox.addEventListener('keyup', event =>{
-    if(event === 'Enter'){
-        const message= chatbox.value.trim()
-        if(message.length > 0){
-            socket.emit('message',{
+}
+
+
+// Enviar mensajes
+chatbox.addEventListener('keyup', event => {
+    if (event.key === 'Enter') {
+        const message = chatbox.value.trim()
+        if (message.length > 0) {
+            socket.emit('message', {
                 user,
                 message
             })
-            chatbox.value= ''
+
+            chatbox.value = ''
         }
     }
 })
-//.......
 
-//recibir 
-socket.on('logs', data =>{
-    const divlogs= document.getElementById('logs')
-    let message= ''
-data.forEach(msn => {
-    message = `<p><i>${msn.user}</i>: ${msn.message}</p>` + message
+// Recibir Mensajes
+socket.on('logs', data => {
+    const divLogs = document.getElementById('logs')
+    console.log(data)
+    let messages = ''
 
+    data.forEach(msn => {
+        messages = `<p><i>${msn.user}</i>: ${msn.message}</p>` + messages
+    })
+
+    divLogs.innerHTML = messages
 })
-
-    divlogs.innerHTML = message
-})
-//....
